@@ -15,12 +15,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: miniscruff/changie-action@6dcc2533cac0495148ed4046c438487e4dceaa23 # ratchet:miniscruff/changie-action@v2.0.0
-
-      - name: Create and push tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          version=$(changie latest)
-          git tag "v${version}"
-          git push origin "v${version}"
+      - uses: tylerbutler/actions/changie-auto-tag@feat/changie-release
