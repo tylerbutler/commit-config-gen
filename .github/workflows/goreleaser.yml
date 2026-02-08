@@ -1,0 +1,39 @@
+name: GoReleaser
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # ratchet:actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - uses: miniscruff/changie-action@6dcc2533cac0495148ed4046c438487e4dceaa23 # ratchet:miniscruff/changie-action@v2.0.0
+
+      - name: Get changelog for version
+        id: changelog
+        run: |
+          version=$(changie latest)
+          echo "CHANGIE_CHANGELOG<<EOF" >> "$GITHUB_ENV"
+          cat ".changes/${version}.md" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # ratchet:goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGIE_CHANGELOG: ${{ env.CHANGIE_CHANGELOG }}

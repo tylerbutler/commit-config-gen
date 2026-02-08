@@ -1,0 +1,68 @@
+version: 2
+
+project_name: commit-config-gen
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - binary: commit-config-gen
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+archives:
+  - formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+changelog:
+  disable: false
+  use: ""
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Bug Fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Performance
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Other
+      order: 999
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  github:
+    owner: tylerbutler
+    name: commit-config-gen
+  header: |
+    ## Changelog
+
+    {{ .Env.CHANGIE_CHANGELOG }}
+  footer: |
+    **Full Changelog**: https://github.com/tylerbutler/commit-config-gen/compare/{{ .PreviousTag }}...{{ .Tag }}
