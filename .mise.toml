@@ -1,3 +1,4 @@
 [tools]
 changie = "latest"
 goreleaser = "latest"
+just = "latest"
