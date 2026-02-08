@@ -22,3 +22,9 @@ Thumbs.db
 commit-types.json
 cliff.toml
 .commitlintrc.json
+.versionrc.json
+release-please-config.json
+.releaserc.json
+release-plz.toml
+
+**/.claude/settings.local.json

@@ -12,14 +12,6 @@ alias t := test
 build:
     go build -o commit-config-gen .
 
-# Build for all platforms
-build-all:
-    GOOS=linux GOARCH=amd64 go build -o dist/commit-config-gen-linux-amd64 .
-    GOOS=linux GOARCH=arm64 go build -o dist/commit-config-gen-linux-arm64 .
-    GOOS=darwin GOARCH=amd64 go build -o dist/commit-config-gen-darwin-amd64 .
-    GOOS=darwin GOARCH=arm64 go build -o dist/commit-config-gen-darwin-arm64 .
-    GOOS=windows GOARCH=amd64 go build -o dist/commit-config-gen-windows-amd64.exe .
-
 # Run tests
 test:
     go test ./...
@@ -34,7 +26,7 @@ lint:
 
 # Clean build artifacts
 clean:
-    rm -rf commit-config-gen dist/
+    rm -rf commit-config-gen commit-config-gen.exe dist/
 
 # Install locally
 install:
@@ -48,3 +40,39 @@ deps:
 deps-update:
     go get -u ./...
     go mod tidy
+
+# --- Changie changelog management ---
+
+# Create a new changelog entry
+change:
+    changie new
+
+# Show pending (unreleased) changelog entries
+change-list:
+    changie list
+
+# Batch unreleased changes into a version
+change-batch version:
+    changie batch {{version}}
+
+# Merge all versioned changelogs into CHANGELOG.md
+change-merge:
+    changie merge
+
+# Show the next auto-determined version
+change-next:
+    changie next auto
+
+# --- GoReleaser ---
+
+# Check goreleaser config
+release-check:
+    goreleaser check
+
+# Build a snapshot release (no publish)
+release-snapshot:
+    CHANGIE_CHANGELOG="$(changie latest)" goreleaser release --snapshot --clean
+
+# Run a full release (requires GITHUB_TOKEN)
+release:
+    CHANGIE_CHANGELOG="$(changie latest)" goreleaser release --clean
