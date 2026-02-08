@@ -1,4 +1,6 @@
 [tools]
 changie = "latest"
+gofumpt = "latest"
+"golangci-lint" = "latest"
 goreleaser = "latest"
 just = "latest"
