@@ -41,6 +41,16 @@ deps-update:
     go get -u ./...
     go mod tidy
 
+# --- Commit config generation ---
+
+# Generate commit configs (changie, commitlint) from commit-types.json
+config-gen: build
+    ./commit-config-gen generate -g changie -g commitlint
+
+# Check commit configs are in sync with commit-types.json
+config-check: build
+    ./commit-config-gen check -g changie -g commitlint
+
 # --- Changie changelog management ---
 
 # Create a new changelog entry
