@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: tylerbutler/actions/changie-release@feat/changie-release
+      - uses: tylerbutler/actions/changie-release@v1
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

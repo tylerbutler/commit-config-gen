@@ -15,4 +15,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: tylerbutler/actions/changie-auto-tag@feat/changie-release
+      - uses: tylerbutler/actions/changie-auto-tag@v1
