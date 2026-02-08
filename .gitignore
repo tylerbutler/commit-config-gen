@@ -20,8 +20,10 @@ Thumbs.db
 
 # Generated configs for other tools (test artifacts)
 cliff.toml
+.commitlintrc.json
 .versionrc.json
 release-please-config.json
+.changie.yaml
 .releaserc.json
 release-plz.toml
 

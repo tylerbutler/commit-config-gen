@@ -10,6 +10,7 @@ import (
 type CommitType struct {
 	Description    string  `json:"description"`
 	ChangelogGroup *string `json:"changelog_group"` // nil means excluded from changelog
+	Bump           string  `json:"bump,omitempty"`  // "major", "minor", "patch", or "none"
 }
 
 // CommitlintRule represents a commitlint rule configuration
