@@ -18,8 +18,7 @@ coverage.html
 .DS_Store
 Thumbs.db
 
-# Local config (for testing)
-commit-types.json
+# Generated configs for other tools (test artifacts)
 cliff.toml
 .commitlintrc.json
 .versionrc.json

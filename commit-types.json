@@ -1,0 +1,68 @@
+{
+  "description": "Commit type definitions for commit-config-gen",
+  "types": {
+    "feat": {
+      "description": "A new feature",
+      "changelog_group": "Added",
+      "bump": "minor"
+    },
+    "fix": {
+      "description": "A bug fix",
+      "changelog_group": "Fixed",
+      "bump": "patch"
+    },
+    "perf": {
+      "description": "A code change that improves performance",
+      "changelog_group": "Performance",
+      "bump": "patch"
+    },
+    "refactor": {
+      "description": "A code change that neither fixes a bug nor adds a feature",
+      "changelog_group": "Changed",
+      "bump": "patch"
+    },
+    "docs": {
+      "description": "Documentation only changes",
+      "changelog_group": null
+    },
+    "style": {
+      "description": "Changes that do not affect the meaning of the code",
+      "changelog_group": null
+    },
+    "test": {
+      "description": "Adding missing tests or correcting existing tests",
+      "changelog_group": null
+    },
+    "build": {
+      "description": "Changes that affect the build system or external dependencies",
+      "changelog_group": null
+    },
+    "ci": {
+      "description": "Changes to CI configuration files and scripts",
+      "changelog_group": null
+    },
+    "chore": {
+      "description": "Other changes that don't modify src or test files",
+      "changelog_group": null
+    },
+    "revert": {
+      "description": "Reverts a previous commit",
+      "changelog_group": "Reverted",
+      "bump": "patch"
+    },
+    "deps": {
+      "description": "Dependency updates",
+      "changelog_group": "Dependencies",
+      "bump": "patch"
+    },
+    "security": {
+      "description": "Security-related changes",
+      "changelog_group": "Security",
+      "bump": "patch"
+    }
+  },
+  "excluded_scopes": ["release"],
+  "commitlint_rules": {
+    "body-max-line-length": [0, "always", 200]
+  }
+}
