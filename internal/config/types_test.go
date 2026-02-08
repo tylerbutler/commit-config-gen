@@ -238,9 +238,9 @@ func TestTypeNamesEmpty(t *testing.T) {
 func TestTypeNamesAllUnknown(t *testing.T) {
 	cfg := &Config{
 		Types: map[string]CommitType{
-			"alpha":  {Description: "alpha"},
-			"beta":   {Description: "beta"},
-			"gamma":  {Description: "gamma"},
+			"alpha": {Description: "alpha"},
+			"beta":  {Description: "beta"},
+			"gamma": {Description: "gamma"},
 		},
 	}
 
