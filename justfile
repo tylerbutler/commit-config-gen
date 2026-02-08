@@ -1,14 +1,19 @@
-# justfile for commit-config-gen
+# Commit config generator - Go project for generating commit configuration
 
-# Default recipe: show available commands
+# === ALIASES ===
+alias b := build
+alias t := test
+alias f := format
+alias l := lint
+alias c := clean
+
+# Default recipe
 default:
     @just --list
 
-# Aliases
-alias b := build
-alias t := test
+# === STANDARD RECIPES ===
 
-# Build the binary
+# Compile the project
 build:
     go build -o commit-config-gen .
 
@@ -18,15 +23,22 @@ test:
 
 # Format code
 format:
-    go fmt ./...
+    gofumpt -w .
 
-# Lint code (requires golangci-lint)
+# Run linter
 lint:
     golangci-lint run
 
-# Clean build artifacts
+# Remove build artifacts
 clean:
     rm -rf commit-config-gen commit-config-gen.exe dist/
+
+# Full validation workflow
+ci: format lint test build
+
+alias pr := ci
+
+# === DEPENDENCIES ===
 
 # Install locally
 install:
@@ -36,12 +48,7 @@ install:
 deps:
     go mod download
 
-# Update dependencies
-deps-update:
-    go get -u ./...
-    go mod tidy
-
-# --- Commit config generation ---
+# === CONFIG GENERATION ===
 
 # Generate commit configs (changie, commitlint) from commit-types.json
 config-gen: build
@@ -51,7 +58,7 @@ config-gen: build
 config-check: build
     ./commit-config-gen check -g changie -g commitlint
 
-# --- Changie changelog management ---
+# === CHANGIE ===
 
 # Create a new changelog entry
 change:
@@ -73,7 +80,7 @@ change-merge:
 change-next:
     changie next auto
 
-# --- GoReleaser ---
+# === GORELEASER ===
 
 # Check goreleaser config
 release-check:
