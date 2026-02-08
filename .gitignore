@@ -27,3 +27,5 @@ release-please-config.json
 .changie.yaml
 .releaserc.json
 release-plz.toml
+
+**/.claude/settings.local.json
