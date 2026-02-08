@@ -1,0 +1,24 @@
+# Binaries
+commit-config-gen
+commit-config-gen.exe
+dist/
+
+# Test artifacts
+*.test
+*.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local config (for testing)
+commit-types.json
+cliff.toml
+.commitlintrc.json
