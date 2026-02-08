@@ -134,7 +134,7 @@ func runGenerate(c *cli.Context) error {
 			continue
 		}
 
-		if err := os.WriteFile(filePath, output, 0644); err != nil {
+		if err := os.WriteFile(filePath, output, 0o644); err != nil {
 			return fmt.Errorf("failed to write %s: %w", gen.FileName(), err)
 		}
 		fmt.Printf("Wrote %s\n", filePath)
