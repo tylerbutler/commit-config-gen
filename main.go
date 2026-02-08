@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,7 +27,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:  "generate",
-				Usage: "Generate cliff.toml and .commitlintrc.json",
+				Usage: "Generate config files from commit-types.json",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name:  "dry-run",
@@ -37,6 +38,11 @@ func main() {
 						Aliases: []string{"o"},
 						Value:   ".",
 						Usage:   "output directory for generated files",
+					},
+					&cli.StringSliceFlag{
+						Name:    "generators",
+						Aliases: []string{"g"},
+						Usage:   "generators to run (default: all). Use --generators to list available generators",
 					},
 				},
 				Action: runGenerate,
@@ -51,8 +57,23 @@ func main() {
 						Value:   ".",
 						Usage:   "directory containing config files to check",
 					},
+					&cli.StringSliceFlag{
+						Name:    "generators",
+						Aliases: []string{"g"},
+						Usage:   "generators to check (default: all present files)",
+					},
 				},
 				Action: runCheck,
+			},
+			{
+				Name:  "list",
+				Usage: "List available generators",
+				Action: func(c *cli.Context) error {
+					for _, g := range generator.All() {
+						fmt.Printf("%-25s %s\n", g.Name(), g.FileName())
+					}
+					return nil
+				},
 			},
 		},
 	}
@@ -61,6 +82,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func selectedGenerators(names []string) ([]generator.Generator, error) {
+	if len(names) == 0 {
+		return generator.All(), nil
+	}
+	var gens []generator.Generator
+	for _, name := range names {
+		g, err := generator.Get(name)
+		if err != nil {
+			return nil, fmt.Errorf("%w (available: %s)", err, strings.Join(generator.Names(), ", "))
+		}
+		gens = append(gens, g)
+	}
+	return gens, nil
 }
 
 func runGenerate(c *cli.Context) error {
@@ -73,38 +109,36 @@ func runGenerate(c *cli.Context) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// Generate cliff.toml
-	cliffContent, err := generator.GenerateCliff(cfg)
+	gens, err := selectedGenerators(c.StringSlice("generators"))
 	if err != nil {
-		return fmt.Errorf("failed to generate cliff.toml: %w", err)
+		return err
 	}
 
-	// Generate .commitlintrc.json
-	commitlintContent, err := generator.GenerateCommitlint(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to generate .commitlintrc.json: %w", err)
-	}
+	for _, gen := range gens {
+		filePath := filepath.Join(outputDir, gen.FileName())
 
-	if dryRun {
-		fmt.Println("=== cliff.toml ===")
-		fmt.Println(cliffContent)
-		fmt.Println("\n=== .commitlintrc.json ===")
-		fmt.Println(commitlintContent)
-		return nil
-	}
+		// Read existing file for merge
+		var existing []byte
+		if data, err := os.ReadFile(filePath); err == nil {
+			existing = data
+		}
 
-	// Write files
-	cliffPath := filepath.Join(outputDir, "cliff.toml")
-	if err := os.WriteFile(cliffPath, []byte(cliffContent), 0644); err != nil {
-		return fmt.Errorf("failed to write cliff.toml: %w", err)
-	}
-	fmt.Printf("Wrote %s\n", cliffPath)
+		output, err := gen.Generate(cfg, existing)
+		if err != nil {
+			return fmt.Errorf("failed to generate %s: %w", gen.FileName(), err)
+		}
 
-	commitlintPath := filepath.Join(outputDir, ".commitlintrc.json")
-	if err := os.WriteFile(commitlintPath, []byte(commitlintContent), 0644); err != nil {
-		return fmt.Errorf("failed to write .commitlintrc.json: %w", err)
+		if dryRun {
+			fmt.Printf("=== %s ===\n", gen.FileName())
+			fmt.Println(string(output))
+			continue
+		}
+
+		if err := os.WriteFile(filePath, output, 0644); err != nil {
+			return fmt.Errorf("failed to write %s: %w", gen.FileName(), err)
+		}
+		fmt.Printf("Wrote %s\n", filePath)
 	}
-	fmt.Printf("Wrote %s\n", commitlintPath)
 
 	return nil
 }
@@ -118,47 +152,37 @@ func runCheck(c *cli.Context) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	var errors []string
+	gens, err := selectedGenerators(c.StringSlice("generators"))
+	if err != nil {
+		return err
+	}
 
-	// Check cliff.toml
-	cliffPath := filepath.Join(dir, "cliff.toml")
-	if _, err := os.Stat(cliffPath); err == nil {
-		expected, err := generator.GenerateCliff(cfg)
+	var errs []string
+
+	for _, gen := range gens {
+		filePath := filepath.Join(dir, gen.FileName())
+
+		actual, err := os.ReadFile(filePath)
 		if err != nil {
-			return fmt.Errorf("failed to generate cliff.toml: %w", err)
+			if os.IsNotExist(err) {
+				continue // skip files that don't exist
+			}
+			return fmt.Errorf("failed to read %s: %w", gen.FileName(), err)
 		}
 
-		actual, err := os.ReadFile(cliffPath)
+		expected, err := gen.Generate(cfg, actual)
 		if err != nil {
-			return fmt.Errorf("failed to read cliff.toml: %w", err)
+			return fmt.Errorf("failed to generate %s: %w", gen.FileName(), err)
 		}
 
-		if normalize(expected) != normalize(string(actual)) {
-			errors = append(errors, "cliff.toml is out of sync with commit-types.json")
+		if !bytes.Equal(bytes.TrimSpace(expected), bytes.TrimSpace(actual)) {
+			errs = append(errs, fmt.Sprintf("%s is out of sync with commit-types.json", gen.FileName()))
 		}
 	}
 
-	// Check .commitlintrc.json
-	commitlintPath := filepath.Join(dir, ".commitlintrc.json")
-	if _, err := os.Stat(commitlintPath); err == nil {
-		expected, err := generator.GenerateCommitlint(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to generate .commitlintrc.json: %w", err)
-		}
-
-		actual, err := os.ReadFile(commitlintPath)
-		if err != nil {
-			return fmt.Errorf("failed to read .commitlintrc.json: %w", err)
-		}
-
-		if normalize(expected) != normalize(string(actual)) {
-			errors = append(errors, ".commitlintrc.json is out of sync with commit-types.json")
-		}
-	}
-
-	if len(errors) > 0 {
+	if len(errs) > 0 {
 		fmt.Println("Config sync check failed:")
-		for _, e := range errors {
+		for _, e := range errs {
 			fmt.Printf("  - %s\n", e)
 		}
 		fmt.Println("\nRun 'commit-config-gen generate' to fix")
@@ -167,8 +191,4 @@ func runCheck(c *cli.Context) error {
 
 	fmt.Println("All configs are in sync with commit-types.json")
 	return nil
-}
-
-func normalize(s string) string {
-	return strings.TrimSpace(s)
 }

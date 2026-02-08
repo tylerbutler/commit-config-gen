@@ -2,38 +2,67 @@ package generator
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/tylerbutler/commit-config-gen/internal/config"
 )
 
-// CommitlintConfig represents the .commitlintrc.json structure
-type CommitlintConfig struct {
-	Extends []string       `json:"extends"`
-	Rules   map[string]any `json:"rules"`
+func init() {
+	Register(&CommitlintGenerator{})
 }
 
-// GenerateCommitlint generates .commitlintrc.json content from config
-func GenerateCommitlint(cfg *config.Config) (string, error) {
+// CommitlintGenerator generates .commitlintrc.json for commitlint.
+type CommitlintGenerator struct{}
+
+func (g *CommitlintGenerator) Name() string     { return "commitlint" }
+func (g *CommitlintGenerator) FileName() string { return ".commitlintrc.json" }
+
+func (g *CommitlintGenerator) Generate(cfg *config.Config, existing []byte) ([]byte, error) {
 	typeNames := cfg.TypeNames()
 
 	rules := map[string]any{
 		"type-enum": []any{2, "always", typeNames},
 	}
-
-	// Merge in additional rules from config
 	for name, rule := range cfg.CommitlintRules {
 		rules[name] = rule
 	}
 
-	commitlintCfg := CommitlintConfig{
-		Extends: []string{"@commitlint/config-conventional"},
-		Rules:   rules,
+	if existing != nil {
+		return mergeCommitlint(existing, rules)
+	}
+	return freshCommitlint(rules)
+}
+
+func freshCommitlint(rules map[string]any) ([]byte, error) {
+	doc := map[string]any{
+		"extends": []string{"@commitlint/config-conventional"},
+		"rules":   rules,
+	}
+	return marshalJSON(doc)
+}
+
+func mergeCommitlint(existing []byte, rules map[string]any) ([]byte, error) {
+	var doc map[string]any
+	if err := json.Unmarshal(existing, &doc); err != nil {
+		return nil, fmt.Errorf("parsing existing .commitlintrc.json: %w", err)
 	}
 
-	data, err := json.MarshalIndent(commitlintCfg, "", "  ")
+	existingRules, ok := doc["rules"].(map[string]any)
+	if !ok {
+		existingRules = map[string]any{}
+	}
+	for k, v := range rules {
+		existingRules[k] = v
+	}
+	doc["rules"] = existingRules
+
+	return marshalJSON(doc)
+}
+
+func marshalJSON(v any) ([]byte, error) {
+	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return string(data) + "\n", nil
+	return append(data, '\n'), nil
 }

@@ -22,3 +22,8 @@ Thumbs.db
 commit-types.json
 cliff.toml
 .commitlintrc.json
+.versionrc.json
+release-please-config.json
+.changie.yaml
+.releaserc.json
+release-plz.toml
