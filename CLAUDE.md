@@ -79,3 +79,14 @@ Managed via [mise](https://mise.jdx.dev/) (see `.mise.toml`):
 2. `release.yml` workflow creates release PRs via changie-release action
 3. `auto-tag.yml` creates git tags when release PRs merge
 4. `goreleaser.yml` builds and publishes releases on tag push
+
+### Shared Actions
+
+Release workflows use composite actions from `tylerbutler/actions` (sibling repo at `../actions/`).
+Currently pinned to `@main` for both `changie-release` and `changie-auto-tag`.
+
+### Changie Behavior
+
+- `changie latest` returns versions with `v` prefix (e.g. `v0.1.0`) - don't double-prefix tags
+- `changie batch auto` fails (exit 1) when no unreleased fragments exist - check before calling
+- Unreleased fragments are `.yaml` files in `.changes/unreleased/` (configured in `.changie.yaml`)
